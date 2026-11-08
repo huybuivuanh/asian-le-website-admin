@@ -1,6 +1,7 @@
-import type { Firestore } from "firebase-admin/firestore";
+import type { DocumentReference } from "firebase-admin/firestore";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
+/** Per business: businesses/{id}/confirmationCallLog. */
 const CALL_LOG_COLLECTION = "confirmationCallLog";
 
 /**
@@ -11,9 +12,9 @@ const CALL_LOG_COLLECTION = "confirmationCallLog";
 const MAX_CALLS_PER_ROLLING_HOUR = 20;
 
 /** True if the hourly confirmation-call cap has already been reached. */
-export async function isCallRateLimited(db: Firestore): Promise<boolean> {
+export async function isCallRateLimited(business: DocumentReference): Promise<boolean> {
   const oneHourAgo = Timestamp.fromMillis(Date.now() - 60 * 60 * 1000);
-  const snapshot = await db
+  const snapshot = await business
     .collection(CALL_LOG_COLLECTION)
     .where("at", ">", oneHourAgo)
     .count()
@@ -22,6 +23,6 @@ export async function isCallRateLimited(db: Firestore): Promise<boolean> {
 }
 
 /** Records that a confirmation call was placed, for the rolling-hour count above. */
-export async function recordCallForRateLimit(db: Firestore): Promise<void> {
-  await db.collection(CALL_LOG_COLLECTION).add({ at: FieldValue.serverTimestamp() });
+export async function recordCallForRateLimit(business: DocumentReference): Promise<void> {
+  await business.collection(CALL_LOG_COLLECTION).add({ at: FieldValue.serverTimestamp() });
 }

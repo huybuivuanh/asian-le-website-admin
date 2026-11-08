@@ -18,11 +18,12 @@ function isStillUpcoming(doc: QueryDocumentSnapshot, now: number): boolean {
 }
 
 /**
- * Deletes orders (and reservations, which live in `orders` too) created more than
- * ~30 days ago. Runs daily at 04:00 UTC. Each delete also removes the POS copy
- * through `mirrorOnlineOrder`.
+ * Deletes website orders (and reservations, which live in `orders` too) created more
+ * than ~30 days ago, in every business (businesses/{id}/orders, collection group query;
+ * index in asian-le-firebase/firestore.indexes.json). Runs daily at 04:00 UTC.
+ * Named purgeStaleWebOrders because the POS has its own purgeStaleOrders in the same project.
  */
-export const purgeStaleOrders = onSchedule(
+export const purgeStaleWebOrders = onSchedule(
   {
     schedule: "0 4 * * *",
     timeZone: "UTC",
@@ -34,7 +35,7 @@ export const purgeStaleOrders = onSchedule(
     const now = Date.now();
     const cutoff = Timestamp.fromMillis(now - RETENTION_MS);
     const base = db
-      .collection("orders")
+      .collectionGroup("orders")
       .where("createdAt", "<", cutoff)
       .orderBy("createdAt");
 
@@ -64,7 +65,7 @@ export const purgeStaleOrders = onSchedule(
     }
 
     logger.info(
-      `purgeStaleOrders: deleted ${deleted} orders older than 30 days, kept ${kept} still upcoming.`,
+      `purgeStaleWebOrders: deleted ${deleted} orders older than 30 days, kept ${kept} still upcoming.`,
     );
   },
 );

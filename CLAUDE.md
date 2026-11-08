@@ -68,12 +68,26 @@ All shared interfaces are declared globally here (no import needed). Add new Fir
 
 `/menu` and `/daily-special` each have their own `layout.tsx` that renders the section sidebar (`MenuSidebar.tsx`, `DailySpecialSidebar.tsx`, co-located). `app/(main)/layout.tsx` only handles the auth redirect and the navbar; `(standard)/layout.tsx` is the centered column for everything else.
 
-### Firestore collections
+### Shared Firebase project
+
+website-admin uses the shared `asianlepos` project with the POS, KDS, Orders app, website and rewards.
+
+- **All data is under `businesses/{businessId}/`.** Build paths with `bizCol` / `bizDoc` from `lib/business.ts`, never `collection(db, …)`. The business comes from the signed-in admin's `businessId` claim.
+- **Menu names are translated:** this app edits the website's menu, which is stored as `webCategories` / `webMenuItems` / `webOptionGroups` / `webOptions`, because the POS has its own `categories` / `menuItems` / … in the same business. `bizCol` / `bizDoc` translate the four names, so stores keep using `"categories"`, `"menuItems"` and so on.
+- **Only admins sign in:** custom claims `{ businessId, role: "admin" }`, checked in `contexts/AuthContext.tsx`.
+- **Images** upload to Storage under `businesses/{id}/<folder>/…` (`lib/image-upload.ts`).
+- **Security rules** (Firestore + Storage) live in the separate `D:\Projects\asian-le-firebase` repo, the only place they're deployed from.
+- **Functions** (`functions/`, codebase `website`) trigger on `businesses/{businessId}/orders/{orderId}`. The confirmation-call task carries `{ businessId, orderId }`, and the hourly call cap is `businesses/{id}/confirmationCallLog`. `purgeStaleWebOrders` cleans every business's `orders`. The old `mirrorOnlineOrder` is gone, because the POS reads `orders` directly.
+
+### Firestore collections (inside the business)
 
 | Collection | Store |
 |---|---|
-| `categories` | `categoriesStore` |
-| `menuItems` | `menuItemsStore` |
+| `webCategories` (`"categories"`) | `categoriesStore` |
+| `webMenuItems` (`"menuItems"`) | `menuItemsStore` |
+| `webOptionGroups` (`"optionGroups"`) | `optionGroupsStore` |
+| `webOptions` (`"options"`) | `optionsStore` |
+| `settings/store` | `storeSettingsStore` |
 | `gallery` | `galleryStore` |
 | `updates` | `updatesStore` |
 | `dailySpecials` | `dailySpecialsStore` |

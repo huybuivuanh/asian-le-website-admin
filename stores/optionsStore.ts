@@ -1,15 +1,13 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
   Timestamp,
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
-  doc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface OptionsState {
   options: ItemOption[];
@@ -34,7 +32,7 @@ export const useOptionsStore = create<OptionsState>((set) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "options"),
+      bizCol("options"),
       (snapshot) => {
         const options: ItemOption[] = snapshot.docs.map((doc) => {
           const d = doc.data();
@@ -58,7 +56,7 @@ export const useOptionsStore = create<OptionsState>((set) => ({
   addOption: async (data) => {
     set({ error: null });
     try {
-      const ref = await addDoc(collection(db, "options"), {
+      const ref = await addDoc(bizCol("options"), {
         ...data,
         createdAt: serverTimestamp(),
       });
@@ -73,7 +71,7 @@ export const useOptionsStore = create<OptionsState>((set) => ({
   updateOption: async (id, data) => {
     set({ error: null });
     try {
-      await updateDoc(doc(db, "options", id), data);
+      await updateDoc(bizDoc("options", id), data);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update option";
       set({ error: message });

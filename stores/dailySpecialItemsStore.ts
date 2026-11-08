@@ -1,14 +1,12 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
-  doc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface SpecialItemsState {
   items: DailySpecialItem[];
@@ -42,7 +40,7 @@ export const useSpecialItemsStore = create<SpecialItemsState>((set) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "dailySpecialItems"),
+      bizCol("dailySpecialItems"),
       (snapshot) => {
         const items: DailySpecialItem[] = snapshot.docs.map((docSnap) => {
           const d = docSnap.data();
@@ -76,7 +74,7 @@ export const useSpecialItemsStore = create<SpecialItemsState>((set) => ({
       const optionsList = Array.isArray(options)
         ? options.map((o) => String(o).trim()).filter(Boolean)
         : [];
-      await addDoc(collection(db, "dailySpecialItems"), {
+      await addDoc(bizCol("dailySpecialItems"), {
         name: name.trim(),
         price: Number.isFinite(price) ? price : 0,
         options: optionsList,
@@ -96,7 +94,7 @@ export const useSpecialItemsStore = create<SpecialItemsState>((set) => ({
       const optionsList = Array.isArray(options)
         ? options.map((o) => String(o).trim()).filter(Boolean)
         : [];
-      await updateDoc(doc(db, "dailySpecialItems", id), {
+      await updateDoc(bizDoc("dailySpecialItems", id), {
         name: name.trim(),
         price: Number.isFinite(price) ? price : 0,
         options: optionsList,

@@ -1,11 +1,10 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
-  doc,
   serverTimestamp,
   writeBatch,
 } from "firebase/firestore";
@@ -40,7 +39,7 @@ export const useCategoriesStore = create<CategoriesState>((set) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "categories"),
+      bizCol("categories"),
       (snapshot) => {
         const categories: FoodCategory[] = snapshot.docs.map((doc) => {
           const d = doc.data();
@@ -65,7 +64,7 @@ export const useCategoriesStore = create<CategoriesState>((set) => ({
   addCategory: async (name: string, description: string) => {
     set({ error: null });
     try {
-      await addDoc(collection(db, "categories"), {
+      await addDoc(bizCol("categories"), {
         name: name.trim(),
         description: (description ?? "").trim(),
         order: Date.now(),
@@ -82,7 +81,7 @@ export const useCategoriesStore = create<CategoriesState>((set) => ({
   updateCategory: async (id, name, description) => {
     set({ error: null });
     try {
-      await updateDoc(doc(db, "categories", id), {
+      await updateDoc(bizDoc("categories", id), {
         name: name.trim(),
         description: (description ?? "").trim(),
       });
@@ -99,7 +98,7 @@ export const useCategoriesStore = create<CategoriesState>((set) => ({
     try {
       const batch = writeBatch(db);
       orderedIds.forEach((id, index) => {
-        const ref = doc(db, "categories", id);
+        const ref = bizDoc("categories", id);
         batch.update(ref, { order: index });
       });
       await batch.commit();

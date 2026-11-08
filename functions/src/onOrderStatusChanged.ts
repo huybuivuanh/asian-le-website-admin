@@ -46,7 +46,7 @@ function normalizeFulfillment(raw: unknown): OrderFulfillment {
  */
 export const onOrderStatusChanged = onDocumentUpdated(
   {
-    document: "orders/{orderId}",
+    document: "businesses/{businessId}/orders/{orderId}",
     secrets: [
       twilioAccountSid,
       twilioAuthToken,

@@ -13,8 +13,9 @@ Admin dashboard for managing the Asian Le restaurant website. Built with Next.js
 - **Settings**: pause online ordering, store and reservation hours, holidays, wait time, phone number
 - **Authentication**: staff-only access with Firebase Auth
 
-Cloud Functions in `functions/` handle the order confirmation call, customer SMS/email
-status updates, and mirroring online orders to the POS. See `functions/README.md`.
+Cloud Functions in `functions/` (codebase `website` in the shared `asianlepos` project)
+handle the order confirmation call, customer SMS/email status updates, and cleaning up old
+orders. The POS reads `businesses/{id}/orders` directly. See `functions/README.md`.
 
 ## Tech Stack
 

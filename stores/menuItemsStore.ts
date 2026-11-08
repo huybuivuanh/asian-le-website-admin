@@ -1,16 +1,14 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
   Timestamp,
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
-  doc,
   serverTimestamp,
   deleteField,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { deleteImageByUrl, uploadImage } from "@/lib/image-upload";
 import { KitchenType } from "@/types/enum";
 
@@ -48,7 +46,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "menuItems"),
+      bizCol("menuItems"),
       (snapshot) => {
         const items: MenuItem[] = snapshot.docs.map((doc) => {
           const d = doc.data();
@@ -93,7 +91,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
       if (categoryIds?.length) payload.categoryIds = categoryIds;
       if (availability) payload.availability = availability;
 
-      await addDoc(collection(db, "menuItems"), payload);
+      await addDoc(bizCol("menuItems"), payload);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to add menu item";
       set({ error: message });
@@ -125,7 +123,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
         payload.image = { name: imageFile.name, url };
       }
 
-      await updateDoc(doc(db, "menuItems", id), payload);
+      await updateDoc(bizDoc("menuItems", id), payload);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update menu item";
       set({ error: message });

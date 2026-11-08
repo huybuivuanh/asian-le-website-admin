@@ -1,13 +1,12 @@
+import { bizCol } from "@/lib/business";
 import {
   Timestamp,
-  collection,
   getDocs,
   orderBy,
   query,
   where,
   type DocumentData,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { TakeOutFulfillmentKind } from "@/types/enum";
 
 export const ORDERS_COLLECTION = "orders";
@@ -116,7 +115,7 @@ function normalizeOrderDoc(id: string, data: DocumentData): Order {
 export async function fetchOrdersForDate(dateKey: string): Promise<Order[]> {
   const bounds = localDayBoundsFromDateKey(dateKey);
   if (bounds == null) return [];
-  const ref = collection(db, ORDERS_COLLECTION);
+  const ref = bizCol(ORDERS_COLLECTION);
   const q = query(
     ref,
     where("createdAt", ">=", bounds.start),
@@ -129,7 +128,7 @@ export async function fetchOrdersForDate(dateKey: string): Promise<Order[]> {
 
 export async function fetchAllOrders(): Promise<Order[]> {
   const snap = await getDocs(
-    query(collection(db, ORDERS_COLLECTION), orderBy("createdAt", "desc")),
+    query(bizCol(ORDERS_COLLECTION), orderBy("createdAt", "desc")),
   );
   return snap.docs.map((d) => normalizeOrderDoc(d.id, d.data()));
 }

@@ -1,3 +1,4 @@
+import { getBusinessId } from "@/lib/business";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
@@ -60,12 +61,12 @@ export async function shrinkImage(file: File): Promise<File> {
   return new File([blob], `${baseName}.${ext}`, { type: blob.type });
 }
 
-/** Shrinks the image, uploads it to `<folder>/<timestamp>_<name>` and returns its
- * download URL. */
+/** Shrinks the image, uploads it to `businesses/<id>/<folder>/<timestamp>_<name>` (the
+ * Storage rules only let that business's admin write there) and returns its download URL. */
 export async function uploadImage(folder: string, file: File): Promise<string> {
   const image = await shrinkImage(file);
   const safeName = image.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storageRef = ref(storage, `${folder}/${Date.now()}_${safeName}`);
+  const storageRef = ref(storage, `businesses/${getBusinessId()}/${folder}/${Date.now()}_${safeName}`);
   await uploadBytes(storageRef, image, {
     contentType: image.type,
     cacheControl: CACHE_CONTROL,

@@ -1,14 +1,12 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
-  doc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface OptionGroupsState {
   optionGroups: OptionGroup[];
@@ -33,7 +31,7 @@ export const useOptionGroupsStore = create<OptionGroupsState>((set) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "optionGroups"),
+      bizCol("optionGroups"),
       (snapshot) => {
         const optionGroups: OptionGroup[] = snapshot.docs.map((doc) => {
           const d = doc.data();
@@ -59,7 +57,7 @@ export const useOptionGroupsStore = create<OptionGroupsState>((set) => ({
   addOptionGroup: async (data) => {
     set({ error: null });
     try {
-      const ref = await addDoc(collection(db, "optionGroups"), {
+      const ref = await addDoc(bizCol("optionGroups"), {
         ...data,
         createdAt: serverTimestamp(),
       });
@@ -74,7 +72,7 @@ export const useOptionGroupsStore = create<OptionGroupsState>((set) => ({
   updateOptionGroup: async (id, data) => {
     set({ error: null });
     try {
-      await updateDoc(doc(db, "optionGroups", id), data);
+      await updateDoc(bizDoc("optionGroups", id), data);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update option group";
       set({ error: message });

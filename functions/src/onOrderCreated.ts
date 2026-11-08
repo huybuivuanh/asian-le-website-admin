@@ -12,12 +12,12 @@ const CONFIRMATION_CHECK_DELAY_SECONDS = 15;
  * `await sleep()` inside this trigger).
  */
 export const onOrderCreated = onDocumentCreated(
-  "orders/{orderId}",
+  "businesses/{businessId}/orders/{orderId}",
   async (event) => {
-    const orderId = event.params.orderId;
+    const { businessId, orderId } = event.params;
     const queue = getFunctions().taskQueue("checkOrderConfirmed");
     await queue.enqueue(
-      { orderId },
+      { businessId, orderId },
       { scheduleDelaySeconds: CONFIRMATION_CHECK_DELAY_SECONDS },
     );
     logger.info(

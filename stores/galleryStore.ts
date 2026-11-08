@@ -1,14 +1,12 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
   deleteDoc,
-  doc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { deleteImageByUrl, uploadImage } from "@/lib/image-upload";
 
 interface GalleryState {
@@ -39,7 +37,7 @@ export const useGalleryStore = create<GalleryState>((set, get) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "gallery"),
+      bizCol("gallery"),
       (snapshot) => {
         const items: ImageItem[] = snapshot.docs.map((doc) => {
           const d = doc.data();
@@ -60,7 +58,7 @@ export const useGalleryStore = create<GalleryState>((set, get) => ({
     try {
       const url = await uploadImage("gallery", imageFile);
 
-      await addDoc(collection(db, "gallery"), {
+      await addDoc(bizCol("gallery"), {
         name: name.trim(),
         url,
       });
@@ -88,7 +86,7 @@ export const useGalleryStore = create<GalleryState>((set, get) => ({
         url = await uploadImage("gallery", imageFile);
       }
 
-      await updateDoc(doc(db, "gallery", id), {
+      await updateDoc(bizDoc("gallery", id), {
         name: name.trim(),
         url,
       });
@@ -111,7 +109,7 @@ export const useGalleryStore = create<GalleryState>((set, get) => ({
           // Ignore; still delete the doc
         }
       }
-      await deleteDoc(doc(db, "gallery", id));
+      await deleteDoc(bizDoc("gallery", id));
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to delete gallery item";

@@ -1,6 +1,6 @@
+import { bizDoc } from "@/lib/business";
 import { create } from "zustand";
-import { Timestamp, doc, onSnapshot, setDoc, type Unsubscribe } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { Timestamp, onSnapshot, setDoc, type Unsubscribe } from "firebase/firestore";
 import { INDEFINITE_PAUSE } from "@/lib/store-settings";
 
 interface StoreSettingsState {
@@ -13,7 +13,8 @@ interface StoreSettingsState {
   reset: () => void;
 }
 
-const SETTINGS_DOC = doc(db, "settings", "store");
+// A function, not a constant: the business is only known after sign-in.
+const settingsDoc = () => bizDoc("settings", "store");
 
 const defaultHours: DayHours = { isOpen: true, open: "11:00", close: "21:00" };
 
@@ -58,7 +59,7 @@ export const useStoreSettingsStore = create<StoreSettingsState>((set) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      SETTINGS_DOC,
+      settingsDoc(),
       (snapshot) => {
         if (snapshot.exists()) {
           const d = snapshot.data();
@@ -88,7 +89,7 @@ export const useStoreSettingsStore = create<StoreSettingsState>((set) => ({
           ? Timestamp.fromDate(patch.pausedUntil)
           : null;
       }
-      await setDoc(SETTINGS_DOC, firestorePatch, { merge: true });
+      await setDoc(settingsDoc(), firestorePatch, { merge: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update settings";
       set({ error: message });

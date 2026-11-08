@@ -6,6 +6,7 @@ import { isCallRateLimited, recordCallForRateLimit } from "./rateLimit";
 import { twilioAccountSid, twilioAuthToken, twilioFromNumber } from "./secrets";
 
 interface CheckOrderConfirmedPayload {
+  businessId: string;
   orderId: string;
 }
 
@@ -29,9 +30,15 @@ export const checkOrderConfirmed = onTaskDispatched<CheckOrderConfirmedPayload>(
     },
   },
   async (req) => {
-    const { orderId } = req.data;
+    const { businessId, orderId } = req.data;
+    if (!businessId || !orderId) {
+      logger.error("checkOrderConfirmed: missing businessId or orderId in the task.", req.data);
+      return;
+    }
     const db = getFirestore();
-    const orderRef = db.collection("orders").doc(orderId);
+    // Shared project: each business's orders and settings are under businesses/{id}.
+    const business = db.doc(`businesses/${businessId}`);
+    const orderRef = business.collection("orders").doc(orderId);
 
     const claimed = await db.runTransaction(async (tx) => {
       const snap = await tx.get(orderRef);
@@ -52,13 +59,13 @@ export const checkOrderConfirmed = onTaskDispatched<CheckOrderConfirmedPayload>(
       return;
     }
 
-    if (await isCallRateLimited(db)) {
+    if (await isCallRateLimited(business)) {
       logger.warn(`Confirmation call for order ${orderId} skipped: hourly call cap reached.`);
       await orderRef.update({ confirmationCallStatus: "failed" });
       return;
     }
 
-    const settingsSnap = await db.doc("settings/store").get();
+    const settingsSnap = await business.collection("settings").doc("store").get();
     const restaurantPhoneNumber = settingsSnap.data()?.restaurantPhoneNumber as string | undefined;
     if (!restaurantPhoneNumber) {
       logger.warn(`Confirmation call for order ${orderId} skipped: no restaurantPhoneNumber configured in settings/store.`);
@@ -77,7 +84,7 @@ export const checkOrderConfirmed = onTaskDispatched<CheckOrderConfirmedPayload>(
         authToken: twilioAuthToken.value(),
         fromNumber: twilioFromNumber.value(),
       });
-      await recordCallForRateLimit(db);
+      await recordCallForRateLimit(business);
       logger.info(`Confirmation call placed for order ${orderId}.`);
     } catch (err) {
       logger.error(`Confirmation call for order ${orderId} failed`, err);

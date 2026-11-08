@@ -6,7 +6,8 @@
  *
  * Use these instead of calling two store actions one after another.
  */
-import { doc, writeBatch } from "firebase/firestore";
+import { bizDoc } from "@/lib/business";
+import { writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteImageByUrl } from "@/lib/image-upload";
 import {
@@ -40,7 +41,7 @@ async function commit(writes: Write[]) {
   if (writes.length === 0) return;
   const batch = writeBatch(db);
   for (const w of writes) {
-    const ref = doc(db, w.collection, w.id);
+    const ref = bizDoc(w.collection, w.id);
     if (w.kind === "update") batch.update(ref, w.data);
     else batch.delete(ref);
   }

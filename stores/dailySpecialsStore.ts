@@ -1,14 +1,12 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
-  doc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import type { DayOfWeek } from "@/types/enum";
 
 interface DailySpecialsState {
@@ -43,7 +41,7 @@ export const useDailySpecialsStore = create<DailySpecialsState>((set) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "dailySpecials"),
+      bizCol("dailySpecials"),
       (snapshot) => {
         const dailySpecials: DailySpecial[] = snapshot.docs.map((docSnap) => {
           const d = docSnap.data();
@@ -73,7 +71,7 @@ export const useDailySpecialsStore = create<DailySpecialsState>((set) => ({
   addDailySpecial: async (dayOfWeek, startTime, endTime) => {
     set({ error: null });
     try {
-      await addDoc(collection(db, "dailySpecials"), {
+      await addDoc(bizCol("dailySpecials"), {
         dayOfWeek,
         timeRange: { startTime: startTime.trim(), endTime: endTime.trim() },
         createdAt: serverTimestamp(),
@@ -89,7 +87,7 @@ export const useDailySpecialsStore = create<DailySpecialsState>((set) => ({
   updateDailySpecial: async (id, dayOfWeek, startTime, endTime) => {
     set({ error: null });
     try {
-      await updateDoc(doc(db, "dailySpecials", id), {
+      await updateDoc(bizDoc("dailySpecials", id), {
         dayOfWeek,
         startTime: startTime.trim(),
         endTime: endTime.trim(),

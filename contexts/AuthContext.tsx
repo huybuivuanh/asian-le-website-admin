@@ -14,6 +14,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
+import { adminBusinessFromClaims, setBusinessId } from "@/lib/business";
 import { auth } from "@/lib/firebase";
 import { listenToAllStores, resetAllStores } from "@/stores/allStores";
 
@@ -28,6 +29,8 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const NO_ACCESS_MESSAGE = "This account isn't an admin of a business.";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +44,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    // Only admins of a business get in; their claim sets the business for every path.
+    // The claim check is async; only the latest auth event counts.
+    let latest = 0;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      const run = ++latest;
+      let businessId: string | null = null;
+      if (user) {
+        try {
+          businessId = adminBusinessFromClaims((await user.getIdTokenResult()).claims);
+        } catch {
+          businessId = null;
+        }
+        if (run !== latest) return;
+        if (!businessId) {
+          setError(NO_ACCESS_MESSAGE);
+          await signOut(auth); // fires again with null
+          return;
+        }
+      }
+      setBusinessId(businessId);
       setUser(user);
       setLoading(false);
 
@@ -62,8 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      if (!adminBusinessFromClaims((await user.getIdTokenResult()).claims)) {
+        await signOut(auth);
+        setError(NO_ACCESS_MESSAGE);
+        throw new Error(NO_ACCESS_MESSAGE);
+      }
     } catch (err: unknown) {
+      if (err instanceof Error && err.message === NO_ACCESS_MESSAGE) throw err;
       let message = "Login failed. Please try again.";
       if (err && typeof err === "object" && "code" in err) {
         const code = (err as { code: string }).code;

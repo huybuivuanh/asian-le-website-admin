@@ -1,4 +1,5 @@
-import { doc, writeBatch } from "firebase/firestore";
+import { bizDoc } from "@/lib/business";
+import { writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export type DocUpdate = { id: string; data: Record<string, unknown> };
@@ -14,7 +15,7 @@ export async function batchUpdateDocs(
   for (let i = 0; i < updates.length; i += MAX_BATCH_WRITES) {
     const batch = writeBatch(db);
     for (const { id, data } of updates.slice(i, i + MAX_BATCH_WRITES)) {
-      batch.update(doc(db, collectionName, id), data);
+      batch.update(bizDoc(collectionName, id), data);
     }
     await batch.commit();
   }

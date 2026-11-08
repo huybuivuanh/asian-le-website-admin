@@ -57,11 +57,11 @@ emulator without waiting for a real order or the real 30s delay.
 
 | File | Purpose |
 |---|---|
-| `src/onOrderCreated.ts` | Firestore trigger on `orders/{orderId}` create — enqueues the delayed confirm-call check via Cloud Tasks. |
+| `src/onOrderCreated.ts` | Firestore trigger on `businesses/{businessId}/orders/{orderId}` create — enqueues the delayed confirm-call check via Cloud Tasks. |
 | `src/checkOrderConfirmed.ts` | Cloud Tasks target — checks the order is still `"New"`, then places the call. Owns idempotency + the rate-limit guardrail. |
 | `src/twilio.ts` | Builds the TwiML script and places the confirmation call. |
 | `src/rateLimit.ts` | Hourly call cap safeguard (`confirmationCallLog` collection) — defensive only, not a normal operating limit. |
-| `src/onOrderStatusChanged.ts` | Firestore trigger on `orders/{orderId}` update — fires the SMS + email for `InProgress`/`ReadyForPickup` transitions. |
+| `src/onOrderStatusChanged.ts` | Firestore trigger on `businesses/{businessId}/orders/{orderId}` update — fires the SMS + email for `InProgress`/`ReadyForPickup` transitions. |
 | `src/orderStatusSms.ts` | Twilio SMS body text + send call for order-status texts. |
 | `src/orderStatusEmail.ts` | Resend email subject/body + send call for order-status emails. |
 | `src/secrets.ts` | Central `defineSecret`/`defineString` declarations, shared across functions that need them. |

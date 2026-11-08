@@ -1,14 +1,12 @@
+import { bizCol, bizDoc } from "@/lib/business";
 import { create } from "zustand";
 import {
-  collection,
   onSnapshot,
   type Unsubscribe,
   addDoc,
   updateDoc,
   deleteDoc,
-  doc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { batchUpdateDocs } from "@/lib/batch-update";
 
 interface HoursState {
@@ -37,7 +35,7 @@ export const useHoursStore = create<HoursState>((set) => ({
   listen: () => {
     set({ loading: true, error: null });
     return onSnapshot(
-      collection(db, "hours"),
+      bizCol("hours"),
       (snapshot) => {
         const hours: StoreHour[] = snapshot.docs.map((doc) => {
           const d = doc.data();
@@ -58,7 +56,7 @@ export const useHoursStore = create<HoursState>((set) => ({
   addHour: async (days, time) => {
     set({ error: null });
     try {
-      await addDoc(collection(db, "hours"), {
+      await addDoc(bizCol("hours"), {
         days: days.trim(),
         time: time.trim(),
         order: Date.now(),
@@ -74,7 +72,7 @@ export const useHoursStore = create<HoursState>((set) => ({
   updateHour: async (id, days, time) => {
     set({ error: null });
     try {
-      await updateDoc(doc(db, "hours", id), {
+      await updateDoc(bizDoc("hours", id), {
         days: days.trim(),
         time: time.trim(),
       });
@@ -104,7 +102,7 @@ export const useHoursStore = create<HoursState>((set) => ({
   deleteHour: async (id) => {
     set({ error: null });
     try {
-      await deleteDoc(doc(db, "hours", id));
+      await deleteDoc(bizDoc("hours", id));
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to delete hour";
