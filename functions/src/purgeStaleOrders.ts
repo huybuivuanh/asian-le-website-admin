@@ -19,8 +19,9 @@ function isStillUpcoming(doc: QueryDocumentSnapshot, now: number): boolean {
 
 /**
  * Deletes website orders (and reservations, which live in `orders` too) created more
- * than ~30 days ago, in every business (businesses/{id}/orders, collection group query;
- * index in asian-le-firebase/firestore.indexes.json). Runs daily at 04:00 UTC.
+ * than ~30 days ago, in every business (businesses/{id}/orders). Each business is queried on
+ * its own path, not with a collection group query, so a same-named collection elsewhere in
+ * the shared project is never touched. Runs daily at 04:00 UTC.
  * Named purgeStaleWebOrders because the POS has its own purgeStaleOrders in the same project.
  */
 export const purgeStaleWebOrders = onSchedule(
@@ -34,34 +35,38 @@ export const purgeStaleWebOrders = onSchedule(
     const db = getFirestore();
     const now = Date.now();
     const cutoff = Timestamp.fromMillis(now - RETENTION_MS);
-    const base = db
-      .collectionGroup("orders")
-      .where("createdAt", "<", cutoff)
-      .orderBy("createdAt");
-
     let deleted = 0;
     let kept = 0;
-    let last: QueryDocumentSnapshot | undefined;
 
-    // Page with a cursor (not "re-run the query until empty"), because kept
-    // upcoming orders would otherwise come back on every pass.
-    while (true) {
-      const page = await (last ? base.startAfter(last) : base).limit(BATCH_SIZE).get();
-      if (page.empty) break;
+    for (const business of await db.collection("businesses").listDocuments()) {
+      const base = business
+        .collection("orders")
+        .where("createdAt", "<", cutoff)
+        .orderBy("createdAt");
+      let last: QueryDocumentSnapshot | undefined;
 
-      const batch = db.batch();
-      let inBatch = 0;
-      for (const doc of page.docs) {
-        if (isStillUpcoming(doc, now)) {
-          kept++;
-          continue;
+      // Page with a cursor (not "re-run the query until empty"), because kept
+      // upcoming orders would otherwise come back on every pass.
+      while (true) {
+        const page = await (last ? base.startAfter(last) : base)
+          .limit(BATCH_SIZE)
+          .get();
+        if (page.empty) break;
+
+        const batch = db.batch();
+        let inBatch = 0;
+        for (const doc of page.docs) {
+          if (isStillUpcoming(doc, now)) {
+            kept++;
+            continue;
+          }
+          batch.delete(doc.ref);
+          inBatch++;
         }
-        batch.delete(doc.ref);
-        inBatch++;
+        if (inBatch > 0) await batch.commit();
+        deleted += inBatch;
+        last = page.docs[page.docs.length - 1];
       }
-      if (inBatch > 0) await batch.commit();
-      deleted += inBatch;
-      last = page.docs[page.docs.length - 1];
     }
 
     logger.info(
