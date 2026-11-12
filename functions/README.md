@@ -14,7 +14,7 @@ Two features live here:
 ```bash
 npm install
 firebase login
-firebase use asianlewebsite   # already set as default in .firebaserc
+firebase use asianlepos   # the shared project, already the default in .firebaserc
 ```
 
 Set the secrets (each prompts for its value, stored in Secret Manager —
