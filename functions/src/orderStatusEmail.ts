@@ -160,6 +160,23 @@ function orderDetailsHtml({ orderItems, taxBreakDown }: OrderDetails): string {
     </table>`;
 }
 
+const GOOGLE_REVIEW_URL = "https://g.page/r/CYhz8oW-6QKjEAE/review";
+const FACEBOOK_PAGE_URL = "https://www.facebook.com/profile.php?id=100027589556980";
+
+/** Review / follow links at the bottom of the "ready for pickup" email. */
+function reviewLinksHtml(): string {
+  const linkStyle = "color:#222;font-weight:bold;";
+  return `
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee;color:#666;font-size:13px;">
+          <p style="margin:0 0 8px;">Enjoyed your meal? We'd love to hear from you!</p>
+          <p style="margin:0;">
+            <a href="${GOOGLE_REVIEW_URL}" style="${linkStyle}">Leave us a Google review</a>
+            &nbsp;&middot;&nbsp;
+            <a href="${FACEBOOK_PAGE_URL}" style="${linkStyle}">Follow us on Facebook</a>
+          </p>
+        </div>`;
+}
+
 export function confirmedEmail(
   order: OrderDetails,
   timeZone: string,
@@ -198,6 +215,7 @@ export function readyForPickupEmail(
         ${fulfillmentLineHtml(fulfillment, timeZone, false)}
         ${orderDetailsHtml(order)}
         <p>Please pay at the store when you pick up your order. Thank you!</p>
+        ${reviewLinksHtml()}
       </div>`,
   };
 }
