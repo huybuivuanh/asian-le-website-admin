@@ -5,6 +5,7 @@ import { useMenuItemsStore } from "@/stores/menuItemsStore";
 import { Modal, ModalBody, ModalFooter, ModalToolbar, panelFormClass } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FormError, checkboxClass, searchInputClass } from "@/components/ui/form";
+import { menuItemLabel, searchMenuItems } from "@/lib/menu-item-number";
 
 type AddCategoryItemsModalProps = {
   open: boolean;
@@ -41,9 +42,7 @@ export function AddCategoryItemsModal({
   }, [open, category]);
 
   const filteredItems = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((m) => m.name.toLowerCase().includes(q));
+    return searchMenuItems(items, search);
   }, [items, search]);
 
   function toggleItem(id: string) {
@@ -117,7 +116,7 @@ export function AddCategoryItemsModal({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-medium text-foreground truncate">
-                          {item.name}
+                          {menuItemLabel(item)}
                         </span>
                         {item.price != null && (
                           <span className="text-xs font-semibold text-foreground/80 rounded-full border border-foreground/15 bg-foreground/5 px-2 py-0.5 shrink-0">

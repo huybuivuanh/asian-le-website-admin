@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useMenuItemsStore } from "@/stores/menuItemsStore";
 import { formatPriceCAD } from "@/lib/utils";
+import { menuItemLabel } from "@/lib/menu-item-number";
 import {
   ExpandChevron,
   RemoveButton,
@@ -92,7 +93,7 @@ export function CategoryRow({
                   className="flex items-center justify-between gap-3 px-3 py-1.5"
                 >
                   <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                    {item.name}
+                    {menuItemLabel(item)}
                   </span>
                   <span className="shrink-0 text-sm tabular-nums text-foreground/60">
                     {formatPriceCAD(item.price)}

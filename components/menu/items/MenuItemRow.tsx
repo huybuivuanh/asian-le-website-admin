@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { formatPriceCAD } from "@/lib/utils";
+import { menuItemLabel } from "@/lib/menu-item-number";
 import { useOptionGroupsStore } from "@/stores/optionGroupsStore";
 import { useOptionsStore } from "@/stores/optionsStore";
 import { getOrderedOptionGroupRefs } from "@/lib/menu-item-option-groups";
@@ -108,7 +109,7 @@ export function MenuItemRow({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <p className="min-w-0 font-semibold text-foreground break-words">{item.name}</p>
+            <p className="min-w-0 font-semibold text-foreground break-words">{menuItemLabel(item)}</p>
             <span className="shrink-0 font-semibold tabular-nums text-foreground">
               {formatPriceCAD(item.price)}
             </span>

@@ -25,6 +25,8 @@ declare global {
   interface MenuItem {
     id: string;
     name: string;
+    /** Optional menu number (whole number ≥ 1), shown as "#12 Name" and searchable. */
+    itemNumber?: number;
     description?: string;
     price: number;
     image?: ImageItem;

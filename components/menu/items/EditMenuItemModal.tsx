@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { KitchenType } from "@/types/enum";
-import type { MenuItemInput } from "@/stores/menuItemsStore";
+import { useMenuItemsStore, type MenuItemInput } from "@/stores/menuItemsStore";
+import { digitsOnly, parseItemNumber } from "@/lib/menu-item-number";
 import { WeeklyAvailabilityEditor } from "@/components/menu/items/WeeklyAvailabilityEditor";
 import { Modal } from "@/components/ui/Modal";
 import {
@@ -25,7 +26,9 @@ type EditMenuItemModalProps = {
 };
 
 export function EditMenuItemModal({ open, item, onClose, onSave }: EditMenuItemModalProps) {
+  const allItems = useMenuItemsStore((s) => s.items);
   const [name, setName] = useState("");
+  const [itemNumberInput, setItemNumberInput] = useState("");
   const [description, setDescription] = useState("");
   const [priceInput, setPriceInput] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -40,6 +43,7 @@ export function EditMenuItemModal({ open, item, onClose, onSave }: EditMenuItemM
   useEffect(() => {
     if (open && item) {
       setName(item.name);
+      setItemNumberInput(item.itemNumber != null ? String(item.itemNumber) : "");
       setDescription(item.description ?? "");
       setPriceInput(item.price !== 0 ? String(item.price) : "");
       setImageFile(null);
@@ -53,6 +57,7 @@ export function EditMenuItemModal({ open, item, onClose, onSave }: EditMenuItemM
     }
     if (!open) {
       setName("");
+      setItemNumberInput("");
       setDescription("");
       setPriceInput("");
       setImageFile(null);
@@ -79,10 +84,16 @@ export function EditMenuItemModal({ open, item, onClose, onSave }: EditMenuItemM
       setFormError("Name is required.");
       return;
     }
+    const parsedNumber = parseItemNumber(itemNumberInput, allItems, item.id);
+    if ("error" in parsedNumber) {
+      setFormError(parsedNumber.error);
+      return;
+    }
     setSubmitting(true);
     try {
       await onSave(item.id, {
         name: name.trim(),
+        itemNumber: parsedNumber.value,
         description: description.trim() || undefined,
         price: parsePrice(),
         imageFile,
@@ -148,6 +159,18 @@ export function EditMenuItemModal({ open, item, onClose, onSave }: EditMenuItemM
             onChange={(e) => setName(e.target.value)}
             required
             autoFocus
+          />
+        </Field>
+
+        <Field label="Item number" htmlFor="edit-di-number" hint="Optional. Whole numbers only, shown as “12.” before the name.">
+          <Input
+            id="edit-di-number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={itemNumberInput}
+            onChange={(e) => setItemNumberInput(digitsOnly(e.target.value))}
+            placeholder="e.g. 12"
           />
         </Field>
 

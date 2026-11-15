@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { KitchenType } from "@/types/enum";
-import type { MenuItemInput } from "@/stores/menuItemsStore";
+import { useMenuItemsStore, type MenuItemInput } from "@/stores/menuItemsStore";
+import { digitsOnly, parseItemNumber } from "@/lib/menu-item-number";
 import { WeeklyAvailabilityEditor } from "@/components/menu/items/WeeklyAvailabilityEditor";
 import { Modal } from "@/components/ui/Modal";
 import {
@@ -23,7 +24,9 @@ type AddMenuItemModalProps = {
 };
 
 export function AddMenuItemModal({ open, onClose, onAdd }: AddMenuItemModalProps) {
+  const allItems = useMenuItemsStore((s) => s.items);
   const [name, setName] = useState("");
+  const [itemNumberInput, setItemNumberInput] = useState("");
   const [description, setDescription] = useState("");
   const [priceInput, setPriceInput] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -37,6 +40,7 @@ export function AddMenuItemModal({ open, onClose, onAdd }: AddMenuItemModalProps
   useEffect(() => {
     if (!open) {
       setName("");
+      setItemNumberInput("");
       setDescription("");
       setPriceInput("");
       setImageFile(null);
@@ -61,10 +65,16 @@ export function AddMenuItemModal({ open, onClose, onAdd }: AddMenuItemModalProps
       setFormError("Name is required.");
       return;
     }
+    const parsedNumber = parseItemNumber(itemNumberInput, allItems);
+    if ("error" in parsedNumber) {
+      setFormError(parsedNumber.error);
+      return;
+    }
     setSubmitting(true);
     try {
       await onAdd({
         name: name.trim(),
+        itemNumber: parsedNumber.value,
         description: description.trim() || undefined,
         price: parsePrice(),
         imageFile,
@@ -93,6 +103,18 @@ export function AddMenuItemModal({ open, onClose, onAdd }: AddMenuItemModalProps
             required
             autoFocus
             placeholder="Item name"
+          />
+        </Field>
+
+        <Field label="Item number" htmlFor="add-di-number" hint="Optional. Whole numbers only, shown as “12.” before the name.">
+          <Input
+            id="add-di-number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={itemNumberInput}
+            onChange={(e) => setItemNumberInput(digitsOnly(e.target.value))}
+            placeholder="e.g. 12"
           />
         </Field>
 

@@ -6,6 +6,7 @@ import { MenuItemRow } from "@/components/menu/items/MenuItemRow";
 import { AddMenuItemModal } from "@/components/menu/items/AddMenuItemModal";
 import { EditMenuItemModal } from "@/components/menu/items/EditMenuItemModal";
 import { searchInputClass } from "@/components/ui/form";
+import { searchMenuItems } from "@/lib/menu-item-number";
 import { MenuPageHeader, UnusedFilterButton } from "@/components/menu/MenuPageHeader";
 import { primaryButtonClass } from "@/components/ui/Button";
 import { alertDialog, confirmDialog } from "@/stores/modalStore";
@@ -34,12 +35,7 @@ export default function MenuItemsPage() {
   const unusedCount = useMemo(() => items.filter(isUnused).length, [items]);
 
   const filteredItems = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return items.filter(
-      (m) =>
-        (!unusedOnly || isUnused(m)) &&
-        (!q || m.name.toLowerCase().includes(q)),
-    );
+    return searchMenuItems(items, query).filter((m) => !unusedOnly || isUnused(m));
   }, [items, query, unusedOnly]);
 
   async function handleDelete(item: MenuItem) {
@@ -74,7 +70,7 @@ export default function MenuItemsPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search items…"
+          placeholder="Search by name or number…"
           className={`${searchInputClass} min-w-0 flex-1`}
           aria-label="Search items"
         />

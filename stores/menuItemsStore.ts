@@ -11,9 +11,12 @@ import {
 } from "firebase/firestore";
 import { deleteImageByUrl, uploadImage } from "@/lib/image-upload";
 import { KitchenType } from "@/types/enum";
+import { itemNumberOf } from "@/lib/menu-item-number";
 
 export type MenuItemInput = {
   name: string;
+  /** null = no number (removes it on update). */
+  itemNumber?: number | null;
   description?: string;
   price: number;
   imageFile: File | null;
@@ -53,6 +56,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
           return {
             id: doc.id,
             name: (d.name as string) ?? "",
+            itemNumber: itemNumberOf({ name: "", itemNumber: d.itemNumber }),
             description: d.description as string | undefined,
             price: (d.price as number) ?? 0,
             image: d.image as MenuItem["image"] | undefined,
@@ -71,7 +75,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
     );
   },
 
-  addMenuItem: async ({ name, description, price, imageFile, kitchenType, availability, categoryIds }) => {
+  addMenuItem: async ({ name, itemNumber, description, price, imageFile, kitchenType, availability, categoryIds }) => {
     set({ error: null });
     try {
       let image: ImageItem | undefined;
@@ -88,6 +92,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
         createdAt: serverTimestamp(),
       };
       if (image) payload.image = image;
+      if (itemNumber != null) payload.itemNumber = itemNumber;
       if (categoryIds?.length) payload.categoryIds = categoryIds;
       if (availability) payload.availability = availability;
 
@@ -99,7 +104,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
     }
   },
 
-  updateMenuItem: async (id, { name, description, price, imageFile, removeImage, kitchenType, availability, categoryIds }) => {
+  updateMenuItem: async (id, { name, itemNumber, description, price, imageFile, removeImage, kitchenType, availability, categoryIds }) => {
     set({ error: null });
     try {
       const item = get().items.find((m) => m.id === id);
@@ -109,6 +114,7 @@ export const useMenuItemsStore = create<MenuItemsState>((set, get) => ({
         price: Number.isFinite(price) ? price : 0,
         kitchenType,
         availability: availability ?? deleteField(),
+        itemNumber: itemNumber ?? deleteField(),
       };
       if (categoryIds !== undefined) payload.categoryIds = categoryIds;
 
