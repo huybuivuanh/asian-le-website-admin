@@ -113,23 +113,33 @@ function orderItemsRowsHtml(orderItems: OrderDetails["orderItems"]): string {
     .join("");
 }
 
-/** Discount rows worded like the POS (taken off before tax), or "" when there's none. */
-function discountRowsHtml(taxBreakDown: OrderTaxBreakDown): string {
-  const discount = taxBreakDown.discount;
-  if (!discount || !(discount.discountAmount > 0)) return "";
-  const label =
-    discount.discountType === "Percent"
-      ? `Discount (${discount.discountValue}%)`
-      : `Discount (${formatCurrency(discount.discountValue)})`;
+function amountRowHtml(label: string, value: string): string {
   return `
         <tr>
           <td style="padding:2px 0;">${label}</td>
-          <td style="padding:2px 0;text-align:right;">-${formatCurrency(discount.discountAmount)}</td>
-        </tr>
-        <tr>
-          <td style="padding:2px 0;">Taxable Subtotal</td>
-          <td style="padding:2px 0;text-align:right;">${formatCurrency(discount.taxableSubtotal)}</td>
+          <td style="padding:2px 0;text-align:right;">${value}</td>
         </tr>`;
+}
+
+/** Discount and rewards rows worded like the POS (both taken off before tax), or "" when
+ * there's neither. */
+function discountRowsHtml(taxBreakDown: OrderTaxBreakDown): string {
+  const { discount, rewards } = taxBreakDown;
+  let rows = "";
+  if (discount && discount.discountAmount > 0) {
+    const label =
+      discount.discountType === "Percent"
+        ? `Discount (${discount.discountValue}%)`
+        : `Discount (${formatCurrency(discount.discountValue)})`;
+    rows += amountRowHtml(label, `-${formatCurrency(discount.discountAmount)}`);
+  }
+  if (rewards) {
+    rows += amountRowHtml(`Rewards (${rewards.points} pts)`, `-${formatCurrency(rewards.amount)}`);
+  }
+  if (taxBreakDown.taxableSubtotal < taxBreakDown.subTotal) {
+    rows += amountRowHtml("Taxable Subtotal", formatCurrency(taxBreakDown.taxableSubtotal));
+  }
+  return rows;
 }
 
 function orderDetailsHtml({ orderItems, taxBreakDown }: OrderDetails): string {

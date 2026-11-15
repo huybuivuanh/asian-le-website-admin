@@ -11,9 +11,9 @@ export type TotalLine = {
 };
 
 /**
- * Subtotal → discount (if any) → taxable subtotal → PST → GST → total, worded like
- * the POS's online order card (AsianLePOS OnlineOrderCard / OrderTaxBreakdown).
- * The discount comes off before tax, so the lines add up.
+ * Subtotal → discount (if any) → rewards (if any) → taxable subtotal → PST → GST → total,
+ * worded like the POS's online order card (AsianLePOS OnlineOrderCard / OrderTaxBreakdown).
+ * Both come off before tax, so the lines add up.
  */
 export function orderTotalLines(order: Order): TotalLine[] {
   const tb = order.taxBreakDown;
@@ -23,22 +23,26 @@ export function orderTotalLines(order: Order): TotalLine[] {
 
   const discount = tb.discount;
   if (discount && discount.discountAmount > 0) {
-    lines.push(
-      {
-        label:
-          discount.discountType === DiscountType.Percent
-            ? `Discount (${discount.discountValue}%)`
-            : `Discount (${formatPriceCAD(discount.discountValue)})`,
-        amount: discount.discountAmount,
-        negative: true,
-        kind: "discount",
-      },
-      {
-        label: "Taxable Subtotal",
-        amount: discount.taxableSubtotal,
-        kind: "subtotal",
-      },
-    );
+    lines.push({
+      label:
+        discount.discountType === DiscountType.Percent
+          ? `Discount (${discount.discountValue}%)`
+          : `Discount (${formatPriceCAD(discount.discountValue)})`,
+      amount: discount.discountAmount,
+      negative: true,
+      kind: "discount",
+    });
+  }
+  if (tb.rewards) {
+    lines.push({
+      label: `Rewards (${tb.rewards.points} pts)`,
+      amount: tb.rewards.amount,
+      negative: true,
+      kind: "discount",
+    });
+  }
+  if (tb.taxableSubtotal < tb.subTotal) {
+    lines.push({ label: "Taxable Subtotal", amount: tb.taxableSubtotal, kind: "subtotal" });
   }
 
   lines.push(

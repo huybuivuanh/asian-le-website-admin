@@ -156,18 +156,28 @@ declare global {
     kitchenType: KitchenType;
   }
 
-  /** Same shape as the website's / POS's Discount. Online orders only get an Amount
-   * discount, from rewards points, taken off before tax (taxes are on `taxableSubtotal`). */
+  /** Same shape as the website's / POS's Discount: a staff discount. Online orders don't
+   * get one from the website; rewards points go in `rewards`. */
   interface OrderDiscount {
     discountType: DiscountType;
     discountValue: number;
     discountAmount: number;
-    taxableSubtotal: number;
   }
 
+  /** Rewards points used, taken off after any staff discount. */
+  interface OrderRewards {
+    points: number;
+    /** Dollars actually taken off. */
+    amount: number;
+  }
+
+  /** Same shape as the website's / POS's TaxBreakDown. */
   interface OrderTaxBreakDown {
     subTotal: number;
     discount?: OrderDiscount;
+    rewards?: OrderRewards;
+    /** subTotal − discount − rewards; what tax is calculated on. */
+    taxableSubtotal: number;
     pst: number;
     gst: number;
     total: number;
