@@ -3,7 +3,10 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppModal } from "@/components/AppModal";
 
-export const metadata: Metadata = {};
+export const metadata: Metadata = {
+  // Internal app: keep it out of search results.
+  robots: { index: false, follow: false },
+};
 
 export const viewport: Viewport = {
   colorScheme: "light",
